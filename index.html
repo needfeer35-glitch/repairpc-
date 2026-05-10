@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔧 Repair PC — Компьютерный мастер</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#00b4ff;
+  --blue2:#0077cc;
+  --cyan:#00ffe7;
+  --bg:#040912;
+  --bg2:#080f1e;
+  --card:rgba(8,15,30,0.9);
+  --border:rgba(0,180,255,0.18);
+  --text:#e0f0ff;
+  --dim:rgba(200,230,255,0.5);
+  --glow:0 0 30px rgba(0,180,255,0.4);
+  --r:12px;
+  --tr:0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;line-height:1.7;overflow-x:hidden;min-height:100vh}
+::selection{background:rgba(0,180,255,0.3);color:#fff}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#04060c}
+::-webkit-scrollbar-thumb{background:var(--blue);border-radius:3px}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{max-width:100%;display:block}
+
+/* ── LOADER ─────────────────────────────── */
+#loader{
+  position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(ellipse at center,#040f20 0%,#020408 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity 0.8s ease,visibility 0.8s ease;
+}
+#loader.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.loader-icon{
+  font-size:72px;margin-bottom:24px;
+  animation:loaderBounce 1s ease-in-out infinite;
+  filter:drop-shadow(0 0 20px var(--blue));
+}
+@keyframes loaderBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.loader-bar-wrap{width:260px;margin-bottom:16px}
+.loader-bar-bg{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.loader-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;box-shadow:0 0 10px var(--blue);transition:width 0.2s linear}
+.loader-pct{font-family:'Orbitron',monospace;font-size:28px;font-weight:700;color:var(--blue);text-align:center;margin-bottom:8px;text-shadow:var(--glow)}
+.loader-msg{font-size:11px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;text-align:center}
+
+/* ── PARTICLES ───────────────────────────── */
+#particles-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── NAVBAR ──────────────────────────────── */
+#navbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:0 32px;height:66px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(4,9,18,0.75);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  opacity:0;transform:translateY(-100%);transition:var(--tr);
+}
+#navbar.visible{opacity:1;transform:translateY(0)}
+.nav-logo{
+  font-family:'Orbitron',monospace;font-size:20px;font-weight:900;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  display:flex;align-items:center;gap:10px;cursor:pointer;letter-spacing:1px;
+}
+.nav-logo-icon{font-size:24px;-webkit-text-fill-color:initial;filter:drop-shadow(0 0 8px var(--blue))}
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-btn{
+  position:relative;padding:9px 18px;
+  font-family:'Orbitron',monospace;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--dim);border-radius:8px;transition:var(--tr);border:1px solid transparent;
+}
+.nav-btn:hover,.nav-btn.active{color:var(--blue);border-color:var(--border);background:rgba(0,180,255,0.06);text-shadow:0 0 20px var(--blue)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;border:2px solid var(--border);
+  transition:var(--tr);box-shadow:0 0 12px rgba(0,180,255,0.3);
+}
+.nav-avatar:hover{transform:scale(1.1);box-shadow:var(--glow)}
+
+/* ── PAGES ───────────────────────────────── */
+.page{display:none;min-height:100vh;padding-top:66px;animation:pageFade 0.4s ease}
+.page.active{display:block}
+@keyframes pageFade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ────────────────────────────────── */
+#page-home{position:relative;overflow:hidden}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;padding:0 24px}
+.hero-bg{position:absolute;inset:0;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 60%,rgba(0,100,180,0.25) 0%,transparent 70%),
+    radial-gradient(ellipse 40% 40% at 15% 30%,rgba(0,60,120,0.2) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 50% at 85% 80%,rgba(0,40,100,0.15) 0%,transparent 60%);
+}
+.hero-grid{position:absolute;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(0,180,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,180,255,0.04) 1px,transparent 1px);
+  background-size:50px 50px;mask-image:radial-gradient(ellipse at center,black 20%,transparent 80%)}
+.hero-content{position:relative;z-index:2}
+.hero-eyebrow{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:6px;text-transform:uppercase;color:var(--blue);margin-bottom:20px;display:flex;align-items:center;gap:16px;justify-content:center}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:50px;height:1px;background:linear-gradient(90deg,transparent,var(--blue))}
+.hero-eyebrow::after{transform:scaleX(-1)}
+.hero-title{font-family:'Orbitron',monospace;font-size:clamp(40px,8vw,100px);font-weight:900;line-height:1;
+  background:linear-gradient(135deg,var(--blue) 0%,#ffffff 50%,var(--cyan) 100%);
+  background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:titleShimmer 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 30px rgba(0,180,255,0.4));margin-bottom:20px}
+@keyframes titleShimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero-subtitle{font-size:18px;color:var(--dim);max-width:600px;margin:0 auto 36px;line-height:1.8}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-primary{
+  padding:16px 40px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;font-weight:700;text-transform:uppercase;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-radius:50px;
+  transition:var(--tr);box-shadow:0 0 30px rgba(0,180,255,0.4);border:1px solid rgba(255,255,255,0.1);
+}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 0 50px rgba(0,180,255,0.7)}
+.btn-secondary{
+  padding:16px 40px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;font-weight:600;text-transform:uppercase;
+  color:var(--blue);border:1px solid var(--border);border-radius:50px;transition:var(--tr);
+}
+.btn-secondary:hover{border-color:var(--blue);background:rgba(0,180,255,0.08);transform:translateY(-3px)}
+
+/* ── MONITOR ANIMATION SCENE ────────────── */
+.monitor-scene{
+  position:relative;width:340px;height:280px;margin:0 auto 48px;
+}
+/* Monitor body */
+.monitor-body{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-55%);
+  width:220px;height:160px;
+}
+.monitor-frame{
+  width:220px;height:160px;
+  background:linear-gradient(180deg,#1a2540 0%,#0d1628 100%);
+  border:3px solid #2a3a5c;border-radius:10px 10px 4px 4px;
+  position:relative;overflow:hidden;
+  box-shadow:0 0 30px rgba(0,180,255,0.2),0 20px 40px rgba(0,0,0,0.8);
+}
+.monitor-screen{
+  width:calc(100% - 14px);height:calc(100% - 14px);
+  margin:7px;background:#000d1a;border-radius:6px;
+  position:relative;overflow:hidden;
+}
+.monitor-scanlines{
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.1) 2px,rgba(0,0,0,0.1) 4px);
+  z-index:2;pointer-events:none;
+}
+.monitor-glitch-screen{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 30% 50%,rgba(255,0,80,0.15) 0%,transparent 60%),
+    linear-gradient(135deg,#001a0d 0%,#000d1a 100%);
+  z-index:1;
+}
+.screen-error-text{
+  font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;
+  color:rgba(255,80,80,0.8);text-align:center;line-height:2;
+  animation:glitchText 0.15s infinite alternate;
+}
+@keyframes glitchText{
+  0%{transform:translate(0,0);filter:hue-rotate(0deg)}
+  100%{transform:translate(-2px,1px);filter:hue-rotate(90deg)}
+}
+.monitor-stand{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:40px;height:24px;background:linear-gradient(180deg,#1a2540,#0d1628);
+  clip-path:polygon(20% 0%,80% 0%,100% 100%,0% 100%);
+}
+.monitor-base{
+  position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
+  width:80px;height:8px;background:#1a2540;border-radius:4px;
+}
+
+/* Hammer */
+.hammer{
+  position:absolute;top:-60px;left:50%;transform:translateX(-40%);
+  font-size:52px;line-height:1;
+  animation:hammerFly 1.2s cubic-bezier(0.4,0,0.6,1) 1.5s forwards;
+  filter:drop-shadow(0 0 10px rgba(255,200,0,0.6));
+  z-index:10;opacity:0;
+}
+@keyframes hammerFly{
+  0%{opacity:1;top:-80px;left:20%;transform:rotate(-40deg)}
+  60%{opacity:1;top:30px;left:50%;transform:translateX(-50%) rotate(10deg)}
+  70%{opacity:1;top:50px;left:50%;transform:translateX(-50%) rotate(20deg) scale(1.2)}
+  75%{opacity:1;top:35px;left:50%;transform:translateX(-50%) rotate(5deg) scale(1)}
+  100%{opacity:0;top:-40px;left:70%;transform:rotate(-20deg)}
+}
+
+/* Impact sparks */
+.sparks{
+  position:absolute;top:30px;left:50%;transform:translateX(-50%);
+  font-size:24px;opacity:0;z-index:11;
+  animation:sparksShow 0.4s ease 2.6s forwards;
+}
+@keyframes sparksShow{0%{opacity:0;transform:translateX(-50%) scale(0.5)}40%{opacity:1;transform:translateX(-50%) scale(1.4)}100%{opacity:0;transform:translateX(-50%) scale(0.8)}}
+
+/* Technician person */
+.technician{
+  position:absolute;bottom:2px;right:-10px;
+  font-size:40px;line-height:1;
+  animation:technicianWalk 1.5s ease 3.2s both;
+  opacity:0;z-index:9;
+}
+@keyframes technicianWalk{
+  0%{opacity:0;right:-60px}
+  30%{opacity:1;right:0px}
+  50%{right:-5px}
+  70%{right:2px}
+  100%{opacity:1;right:-5px}
+}
+.technician-tool{
+  position:absolute;bottom:2px;right:15px;
+  font-size:20px;
+  animation:toolWork 0.3s ease 4.2s infinite alternate;
+  opacity:0;
+  animation:toolAppear 0s 4s forwards, toolWork 0.3s ease 4.2s infinite alternate;
+}
+@keyframes toolAppear{to{opacity:1}}
+@keyframes toolWork{0%{transform:rotate(-10deg) translateY(0)}100%{transform:rotate(10deg) translateY(-4px)}}
+
+/* Screen shine after repair */
+.screen-shine{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 50%,rgba(0,255,200,0.3) 0%,transparent 70%);
+  opacity:0;z-index:3;
+  animation:shineAppear 1s ease 5s forwards;
+}
+@keyframes shineAppear{0%{opacity:0}50%{opacity:1}100%{opacity:0.5}}
+.screen-fixed{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#001a2e 0%,#002a1a 100%);
+  opacity:0;z-index:2;
+  animation:fixedAppear 0.5s ease 5.5s forwards;
+}
+@keyframes fixedAppear{to{opacity:1}}
+.fixed-icon{font-size:32px;animation:fixedPulse 2s ease-in-out 6s infinite;filter:drop-shadow(0 0 15px #00ff88)}
+@keyframes fixedPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 10px #00ff88)}50%{transform:scale(1.15);filter:drop-shadow(0 0 30px #00ff88)}}
+/* Sparkle stars */
+.star-1,.star-2,.star-3{
+  position:absolute;font-size:16px;opacity:0;z-index:12;
+  animation:starPop 0.6s ease forwards;
+}
+.star-1{top:10px;left:30px;animation-delay:5.5s}
+.star-2{top:5px;right:25px;animation-delay:5.7s}
+.star-3{bottom:20px;left:15px;animation-delay:5.9s}
+@keyframes starPop{0%{opacity:0;transform:scale(0)}60%{opacity:1;transform:scale(1.4)}100%{opacity:1;transform:scale(1)}}
+
+/* ── STATS ───────────────────────────────── */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  background:rgba(0,180,255,0.03);
+}
+.stat-item{padding:28px 20px;text-align:center;border-right:1px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-num{font-family:'Orbitron',monospace;font-size:clamp(24px,4vw,40px);font-weight:900;color:var(--blue);text-shadow:var(--glow)}
+.stat-label{font-size:12px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:4px}
+
+/* ── SECTIONS ────────────────────────────── */
+.section{max-width:1100px;margin:0 auto;padding:80px 24px}
+.section-header{text-align:center;margin-bottom:64px}
+.section-eyebrow{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:5px;text-transform:uppercase;color:var(--blue);margin-bottom:16px}
+.section-title{font-family:'Orbitron',monospace;font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:20px;line-height:1.2}
+.section-desc{font-size:16px;color:var(--dim);max-width:600px;margin:0 auto}
+
+/* Features */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.feature-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:32px;
+  transition:var(--tr);position:relative;overflow:hidden;
+}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:0;transition:opacity 0.3s}
+.feature-card:hover{transform:translateY(-6px);border-color:rgba(0,180,255,0.4);box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 30px rgba(0,180,255,0.1)}
+.feature-card:hover::before{opacity:1}
+.feature-icon{font-size:42px;margin-bottom:20px;filter:drop-shadow(0 0 10px var(--blue))}
+.feature-title{font-family:'Orbitron',monospace;font-size:15px;font-weight:600;margin-bottom:12px;color:var(--text)}
+.feature-text{font-size:14px;color:var(--dim);line-height:1.8}
+
+/* ── CHAT PAGE ───────────────────────────── */
+#page-chat{background:var(--bg)}
+.chat-layout{max-width:900px;margin:0 auto;padding:80px 24px}
+.chat-header{text-align:center;margin-bottom:40px}
+.chat-header h2{font-family:'Orbitron',monospace;font-size:28px;font-weight:700;color:var(--blue);margin-bottom:10px}
+.chat-header p{color:var(--dim);font-size:14px}
+.chat-box{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  display:flex;flex-direction:column;height:500px;overflow:hidden;
+}
+.chat-messages{
+  flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;
+}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.msg{display:flex;flex-direction:column;max-width:80%}
+.msg.user{align-self:flex-end;align-items:flex-end}
+.msg.master{align-self:flex-start;align-items:flex-start}
+.msg-bubble{
+  padding:12px 18px;border-radius:18px;font-size:14px;line-height:1.6;
+  position:relative;
+}
+.msg.user .msg-bubble{
+  background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;
+  border-bottom-right-radius:4px;
+}
+.msg.master .msg-bubble{
+  background:rgba(255,255,255,0.06);border:1px solid var(--border);
+  border-bottom-left-radius:4px;
+}
+.msg-meta{font-size:11px;color:var(--dim);margin-top:4px;padding:0 4px}
+.msg.master .msg-name{color:var(--blue);font-weight:600;font-size:11px;margin-bottom:4px;padding:0 4px}
+.chat-input-wrap{
+  display:flex;gap:10px;padding:16px;
+  border-top:1px solid var(--border);background:rgba(0,0,0,0.2);
+}
+.chat-input{
+  flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:24px;padding:12px 20px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;
+  outline:none;transition:border-color 0.3s,box-shadow 0.3s;resize:none;max-height:100px;
+}
+.chat-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,180,255,0.12)}
+.chat-send-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  transition:var(--tr);box-shadow:0 0 15px rgba(0,180,255,0.3);flex-shrink:0;
+}
+.chat-send-btn:hover{transform:scale(1.1);box-shadow:0 0 25px rgba(0,180,255,0.6)}
+.chat-status{
+  display:flex;align-items:center;gap:8px;padding:10px 20px;
+  font-size:12px;color:var(--dim);border-top:1px solid var(--border);
+  background:rgba(0,0,0,0.1);
+}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#00ff88;animation:statusPulse 2s ease-in-out infinite}
+@keyframes statusPulse{0%,100%{opacity:1;box-shadow:0 0 6px #00ff88}50%{opacity:0.5;box-shadow:0 0 2px #00ff88}}
+
+/* ── ABOUT PAGE ──────────────────────────── */
+#page-about{background:var(--bg)}
+.about-hero{padding:100px 24px 60px;text-align:center}
+.about-blocks{max-width:1000px;margin:0 auto;padding:0 24px 80px;display:flex;flex-direction:column;gap:80px}
+.about-block{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.about-block:nth-child(even){direction:rtl}
+.about-block:nth-child(even)>*{direction:ltr}
+.about-visual{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  display:flex;align-items:center;justify-content:center;padding:48px;font-size:80px;
+  position:relative;overflow:hidden;min-height:220px;
+  transition:var(--tr);
+}
+.about-visual::before{
+  content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,180,255,0.1),transparent 70%);
+}
+.about-visual:hover{border-color:rgba(0,180,255,0.4);box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.about-text-eyebrow{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--blue);margin-bottom:12px}
+.about-text-title{font-family:'Orbitron',monospace;font-size:26px;font-weight:700;margin-bottom:16px;line-height:1.3}
+.about-text-body{font-size:15px;color:var(--dim);line-height:1.9;margin-bottom:20px}
+.about-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.about-list li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--dim)}
+.about-list li::before{content:'⚡';color:var(--blue);flex-shrink:0}
+
+/* ── PROFILE PAGE ────────────────────────── */
+#page-profile{background:var(--bg)}
+.profile-layout{max-width:1000px;margin:0 auto;padding:80px 24px;display:grid;grid-template-columns:260px 1fr;gap:24px}
+.profile-sidebar{display:flex;flex-direction:column;gap:18px}
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px 20px;text-align:center}
+.profile-ava{
+  width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+  margin:0 auto 14px;border:3px solid var(--border);box-shadow:0 0 25px rgba(0,180,255,0.3);
+}
+.profile-username{font-family:'Orbitron',monospace;font-size:16px;font-weight:600;margin-bottom:4px}
+.profile-role{font-size:11px;letter-spacing:3px;color:var(--blue);text-transform:uppercase;margin-bottom:14px}
+.profile-nav{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.profile-nav-btn{
+  width:100%;padding:14px 18px;text-align:left;display:flex;align-items:center;gap:12px;
+  font-size:14px;color:var(--dim);border-bottom:1px solid var(--border);transition:var(--tr);
+}
+.profile-nav-btn:last-child{border-bottom:none}
+.profile-nav-btn:hover,.profile-nav-btn.active{background:rgba(0,180,255,0.06);color:var(--blue)}
+.profile-main{display:flex;flex-direction:column;gap:18px}
+.profile-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px}
+.profile-section-title{font-family:'Orbitron',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.form-input{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;
+  transition:border-color 0.3s,box-shadow 0.3s;outline:none;
+}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,180,255,0.12)}
+.form-input::placeholder{color:var(--dim)}
+.save-btn{
+  padding:12px 28px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:600;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-radius:8px;transition:var(--tr);margin-top:6px;
+}
+.save-btn:hover{transform:translateY(-2px);box-shadow:var(--glow)}
+
+/* ── MODAL ───────────────────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:var(--tr);
+}
+.modal-overlay.open{opacity:1;visibility:visible}
+.modal-box{
+  background:var(--bg2);border:1px solid var(--border);border-radius:20px;
+  padding:40px;width:100%;max-width:440px;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,0.8),var(--glow);
+  transform:scale(0.95);transition:var(--tr);
+}
+.modal-overlay.open .modal-box{transform:scale(1)}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--dim);transition:var(--tr)}
+.modal-close:hover{background:rgba(255,80,80,0.2);color:#ff5050}
+.modal-title{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;margin-bottom:6px;color:var(--blue)}
+.modal-subtitle{font-size:13px;color:var(--dim);margin-bottom:28px}
+.login-tabs{display:flex;gap:4px;margin-bottom:24px;background:rgba(255,255,255,0.04);border-radius:10px;padding:4px}
+.login-tab{flex:1;padding:10px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);border-radius:7px;transition:var(--tr)}
+.login-tab.active{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff}
+.login-form{display:flex;flex-direction:column;gap:14px}
+.modal-input{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:10px;padding:13px 16px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;outline:none;
+  transition:border-color 0.3s,box-shadow 0.3s;width:100%;
+}
+.modal-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,180,255,0.12)}
+.modal-input::placeholder{color:var(--dim)}
+.modal-btn{
+  width:100%;padding:14px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-radius:10px;
+  transition:var(--tr);box-shadow:0 0 20px rgba(0,180,255,0.3);
+}
+.modal-btn:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(0,180,255,0.5)}
+
+/* CAPTCHA */
+.captcha-wrap{
+  background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:16px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.captcha-math{font-family:'Orbitron',monospace;font-size:16px;font-weight:600;color:var(--blue)}
+.captcha-input{
+  width:80px;background:rgba(255,255,255,0.06);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Orbitron',monospace;font-size:14px;
+  outline:none;text-align:center;transition:border-color 0.3s;
+}
+.captcha-input:focus{border-color:var(--blue)}
+.captcha-refresh{width:32px;height:32px;border-radius:50%;background:rgba(0,180,255,0.1);display:flex;align-items:center;justify-content:center;font-size:16px;transition:var(--tr);cursor:pointer}
+.captcha-refresh:hover{background:rgba(0,180,255,0.2);transform:rotate(180deg)}
+.captcha-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:2px}
+.terms-check{display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--dim)}
+.terms-check input{margin-top:3px;accent-color:var(--blue)}
+
+/* ── TOAST ───────────────────────────────── */
+#toast-container{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none}
+.toast{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 22px;
+  font-size:14px;color:var(--text);backdrop-filter:blur(20px);
+  box-shadow:0 8px 30px rgba(0,0,0,0.5),0 0 20px rgba(0,180,255,0.2);
+  animation:toastIn 0.4s ease,toastOut 0.4s ease 2.6s forwards;
+  display:flex;align-items:center;gap:10px;pointer-events:none;
+}
+.toast.success{border-color:rgba(0,255,136,0.4)}
+.toast.error{border-color:rgba(255,80,80,0.4)}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(-10px)}}
+
+/* ── FOOTER ──────────────────────────────── */
+footer{background:rgba(4,9,18,0.8);border-top:1px solid var(--border);padding:50px 24px 28px;text-align:center}
+.footer-logo{font-family:'Orbitron',monospace;font-size:24px;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px}
+.footer-links{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.footer-link{font-size:13px;color:var(--dim);transition:color 0.2s}
+.footer-link:hover{color:var(--blue)}
+.footer-copy{font-size:12px;color:rgba(200,230,255,0.3)}
+
+/* ── ORBS ────────────────────────────────── */
+.orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(80px);opacity:0.12}
+.orb1{width:400px;height:400px;background:radial-gradient(circle,var(--blue),transparent 70%);top:10%;left:5%;animation:orbDrift 12s ease-in-out infinite}
+.orb2{width:300px;height:300px;background:radial-gradient(circle,var(--cyan),transparent 70%);bottom:15%;right:8%;animation:orbDrift 15s ease-in-out infinite reverse}
+@keyframes orbDrift{0%,100%{transform:translate(0,0)}33%{transform:translate(30px,-20px)}66%{transform:translate(-20px,30px)}}
+
+/* ── TELEGRAM LINK SECTION ──────────────── */
+.tg-section{
+  background:linear-gradient(135deg,rgba(0,80,150,0.15),rgba(0,150,255,0.05));
+  border:1px solid rgba(0,180,255,0.2);border-radius:20px;
+  padding:48px 40px;text-align:center;margin:0 24px 80px;max-width:800px;margin-left:auto;margin-right:auto;
+}
+.tg-icon{font-size:56px;margin-bottom:16px;filter:drop-shadow(0 0 20px #229ED9)}
+.tg-title{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:var(--text);margin-bottom:10px}
+.tg-desc{font-size:14px;color:var(--dim);margin-bottom:24px;line-height:1.8}
+.tg-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 36px;background:#229ED9;color:#fff;border-radius:50px;
+  font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;font-weight:600;
+  transition:var(--tr);box-shadow:0 0 25px rgba(34,158,217,0.4);
+}
+.tg-btn:hover{transform:translateY(-3px);box-shadow:0 0 40px rgba(34,158,217,0.7)}
+
+/* ── RESPONSIVE ──────────────────────────── */
+@media(max-width:768px){
+  .stats-bar{grid-template-columns:1fr 1fr}
+  .stat-item{border-right:none;border-bottom:1px solid var(--border)}
+  .profile-layout{grid-template-columns:1fr}
+  .about-block{grid-template-columns:1fr;gap:32px}
+  .about-block:nth-child(even){direction:ltr}
+  .nav-links{gap:0}
+  .nav-btn{padding:8px 10px;font-size:9px;letter-spacing:1px}
+  .monitor-scene{transform:scale(0.85)}
+}
+@media(max-width:500px){
+  .stats-bar{grid-template-columns:1fr}
+  .hero-btns{flex-direction:column;align-items:center}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-icon">🔧</div>
+  <div class="loader-pct" id="loader-pct">0%</div>
+  <div class="loader-bar-wrap">
+    <div class="loader-bar-bg"><div class="loader-bar-fill" id="loader-bar"></div></div>
+  </div>
+  <div class="loader-msg" id="loader-msg">Инициализация системы...</div>
+</div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="nav-logo" onclick="showPage('home')">
+    <span class="nav-logo-icon">🔧</span> Repair PC
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn" onclick="showPage('about')">О нас</button>
+    <button class="nav-btn" onclick="showPage('chat')">Чат с мастером</button>
+    <button class="nav-btn" id="tg-nav-btn" onclick="openTgLink()">Telegram</button>
+  </div>
+  <div class="nav-right">
+    <div class="nav-avatar" id="nav-avatar-btn" title="Личный кабинет">👤</div>
+  </div>
+</nav>
+
+<!-- PAGES -->
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Профессиональный ремонт компьютеров</div>
+
+      <!-- MONITOR ANIMATION SCENE -->
+      <div class="monitor-scene">
+        <!-- Hammer flies in -->
+        <div class="hammer">🔨</div>
+        <!-- Sparks on impact -->
+        <div class="sparks">✨💥✨</div>
+        <!-- Stars after repair -->
+        <div class="star-1">⭐</div>
+        <div class="star-2">✨</div>
+        <div class="star-3">⭐</div>
+        <!-- Monitor -->
+        <div class="monitor-body">
+          <div class="monitor-frame">
+            <div class="monitor-screen">
+              <div class="monitor-scanlines"></div>
+              <!-- Error state (visible first) -->
+              <div class="monitor-glitch-screen">
+                <div class="screen-error-text">
+                  CRITICAL ERROR<br>0x0000DEAD<br>NO SIGNAL<br>💀
+                </div>
+              </div>
+              <!-- Fixed state (appears after repair) -->
+              <div class="screen-fixed">
+                <div class="fixed-icon">✅</div>
+              </div>
+              <!-- Shine effect -->
+              <div class="screen-shine"></div>
+            </div>
+          </div>
+          <div class="monitor-stand"></div>
+          <div class="monitor-base"></div>
+        </div>
+        <!-- Technician walks in -->
+        <div class="technician">🧑‍🔧</div>
+        <div class="technician-tool">🔩</div>
+      </div>
+      <!-- END ANIMATION -->
+
+      <h1 class="hero-title">Repair PC</h1>
+      <p class="hero-subtitle">Ваш компьютер сломался? Мы починим быстро, качественно и недорого. Опытные мастера на связи 24/7.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="openLoginModal()">🔧 Оставить заявку</button>
+        <button class="btn-secondary" onclick="showPage('chat')">💬 Чат с мастером</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num" data-count="3847">0</div><div class="stat-label">Ремонтов</div></div>
+    <div class="stat-item"><div class="stat-num" data-count="98">0</div><div class="stat-label">% Успеха</div></div>
+    <div class="stat-item"><div class="stat-num" data-count="12">0</div><div class="stat-label">Лет опыта</div></div>
+    <div class="stat-item"><div class="stat-num" data-count="247">0</div><div class="stat-label">Клиентов онлайн</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-eyebrow">Наши услуги</div>
+      <h2 class="section-title">Что мы чиним</h2>
+      <p class="section-desc">Полный спектр услуг по ремонту и обслуживанию компьютерной техники.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">💻</div>
+        <div class="feature-title">Ремонт ноутбуков</div>
+        <div class="feature-text">Замена экранов, клавиатур, зарядных разъёмов, перегрев, вирусы — решим любую проблему с ноутбуком.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <div class="feature-title">Ремонт ПК</div>
+        <div class="feature-text">Диагностика и замена комплектующих, чистка от пыли, замена термопасты, апгрейд системы.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🦠</div>
+        <div class="feature-title">Удаление вирусов</div>
+        <div class="feature-text">Полная очистка системы от вредоносного ПО, восстановление данных, установка защиты.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Ускорение ПК</div>
+        <div class="feature-text">Оптимизация Windows, замена HDD на SSD, добавление ОЗУ, чистка системы от мусора.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔌</div>
+        <div class="feature-title">Замена комплектующих</div>
+        <div class="feature-text">Замена блоков питания, видеокарт, процессоров, материнских плат с гарантией на работу.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <div class="feature-title">Восстановление данных</div>
+        <div class="feature-text">Спасём ваши файлы с повреждённых дисков, флешек и телефонов. Работаем с любыми носителями.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELEGRAM BLOCK -->
+  <div class="tg-section">
+    <div class="tg-icon">✈️</div>
+    <div class="tg-title">Telegram-бот для быстрой связи</div>
+    <div class="tg-desc">Напишите нам прямо в Telegram — получите ответ мастера в течение нескольких минут. Опишите проблему, прикрепите фото, и мы сразу начнём работать.</div>
+    <button class="tg-btn" onclick="openTgLink()">📲 Написать в Telegram</button>
+  </div>
+
+  <footer>
+    <div class="footer-logo">🔧 Repair PC</div>
+    <div class="footer-links">
+      <a class="footer-link" href="#" onclick="showPage('about');return false">О нас</a>
+      <a class="footer-link" href="#" onclick="showPage('chat');return false">Чат</a>
+      <a class="footer-link" href="#" onclick="openTgLink();return false">Telegram</a>
+      <a class="footer-link" href="#" onclick="openLoginModal();return false">Заявка</a>
+    </div>
+    <div class="footer-copy">© 2025 Repair PC. Все права защищены.</div>
+  </footer>
+</div>
+
+<!-- ABOUT -->
+<div id="page-about" class="page">
+  <div class="about-hero">
+    <div class="section-eyebrow" style="margin-bottom:14px">Наша команда</div>
+    <h1 style="font-family:'Orbitron',monospace;font-size:clamp(28px,5vw,52px);font-weight:900;margin-bottom:16px;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">О Repair PC</h1>
+    <p style="font-size:16px;color:var(--dim);max-width:600px;margin:0 auto">Мы команда опытных специалистов, которая помогает людям с проблемами компьютерной техники уже более 12 лет.</p>
+  </div>
+  <div class="about-blocks">
+    <div class="about-block">
+      <div class="about-visual">🔧</div>
+      <div>
+        <div class="about-text-eyebrow">Опыт и качество</div>
+        <div class="about-text-title">Профессиональный ремонт</div>
+        <div class="about-text-body">Наши мастера прошли сертификацию и имеют опыт работы с техникой всех производителей. Мы используем только оригинальные запчасти и даём гарантию на все виды работ.</div>
+        <ul class="about-list">
+          <li>Гарантия на все виды ремонта от 3 месяцев</li>
+          <li>Только оригинальные запчасти</li>
+          <li>Бесплатная диагностика</li>
+        </ul>
+      </div>
+    </div>
+    <div class="about-block">
+      <div class="about-visual">⚡</div>
+      <div>
+        <div class="about-text-eyebrow">Скорость и удобство</div>
+        <div class="about-text-title">Ремонт в день обращения</div>
+        <div class="about-text-body">Большинство поломок мы устраняем в течение 1-2 часов прямо при вас. Для сложных случаев — срок согласуем индивидуально. Возможен выезд мастера на дом.</div>
+        <ul class="about-list">
+          <li>Срочный ремонт за 1 час</li>
+          <li>Выезд мастера на дом</li>
+          <li>Работаем без выходных</li>
+        </ul>
+      </div>
+    </div>
+    <div class="about-block">
+      <div class="about-visual">💬</div>
+      <div>
+        <div class="about-text-eyebrow">Поддержка 24/7</div>
+        <div class="about-text-title">Всегда на связи</div>
+        <div class="about-text-body">Чат с мастером работает круглосуточно. Получите консультацию, опишите проблему и мы подскажем решение — бесплатно и без регистрации через наш Telegram бот.</div>
+        <ul class="about-list">
+          <li>Онлайн-чат на сайте</li>
+          <li>Telegram бот 24/7</li>
+          <li>Бесплатная консультация</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div id="page-chat" class="page">
+  <div class="chat-layout">
+    <div class="chat-header">
+      <h2>💬 Чат с мастером</h2>
+      <p>Опишите вашу проблему — мастер ответит в течение нескольких минут</p>
+    </div>
+    <div id="chat-login-notice" style="display:none;background:rgba(0,180,255,0.06);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;margin-bottom:20px">
+      <p style="color:var(--dim);margin-bottom:12px">Чтобы написать в чат — войдите или зарегистрируйтесь</p>
+      <button class="btn-primary" onclick="openLoginModal()" style="font-size:11px;padding:12px 28px">🔑 Войти / Зарегистрироваться</button>
+    </div>
+    <div class="chat-box">
+      <div class="chat-messages" id="chat-messages">
+        <div class="msg master">
+          <div class="msg-name">🔧 Мастер Алексей</div>
+          <div class="msg-bubble">Здравствуйте! Я мастер сервиса Repair PC. Опишите вашу проблему — постараюсь помочь как можно быстрее.</div>
+          <div class="msg-meta">Сейчас онлайн</div>
+        </div>
+        <div class="msg master">
+          <div class="msg-name">🔧 Мастер Алексей</div>
+          <div class="msg-bubble">Вы можете описать: какой у вас компьютер, что именно не работает, когда это началось — и я дам рекомендации.</div>
+          <div class="msg-meta">только что</div>
+        </div>
+      </div>
+      <div class="chat-status">
+        <div class="status-dot"></div>
+        <span>Мастер онлайн — отвечает в течение 5 минут</span>
+      </div>
+      <div class="chat-input-wrap">
+        <textarea class="chat-input" id="chat-input" placeholder="Опишите проблему с компьютером..." rows="1" onkeydown="chatKeydown(event)"></textarea>
+        <button class="chat-send-btn" onclick="sendMessage()" title="Отправить">➤</button>
+      </div>
+    </div>
+    <div style="margin-top:20px;text-align:center">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:12px">Или напишите нам напрямую в Telegram — там мастер тоже онлайн!</p>
+      <button class="tg-btn" onclick="openTgLink()">📲 Открыть Telegram бот</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="page-profile" class="page">
+  <div class="profile-layout">
+    <div class="profile-sidebar">
+      <div class="profile-card">
+        <div class="profile-ava">👤</div>
+        <div class="profile-username" id="profile-name">Гость</div>
+        <div class="profile-role" id="profile-role">Клиент</div>
+      </div>
+      <div class="profile-nav">
+        <button class="profile-nav-btn active" onclick="switchProfileTab(this,'tab-info')">📋 Профиль</button>
+        <button class="profile-nav-btn" onclick="switchProfileTab(this,'tab-requests')">🔧 Мои заявки</button>
+        <button class="profile-nav-btn" onclick="switchProfileTab(this,'tab-settings')">⚙️ Настройки</button>
+        <button class="profile-nav-btn" onclick="logoutUser()" style="color:rgba(255,80,80,0.7)">🚪 Выйти</button>
+      </div>
+    </div>
+    <div class="profile-main">
+      <div id="tab-info" class="profile-section">
+        <div class="profile-section-title">Личная информация</div>
+        <div class="form-grid">
+          <div class="form-group"><div class="form-label">Имя</div><input class="form-input" id="pf-name" placeholder="Ваше имя"></div>
+          <div class="form-group"><div class="form-label">Email</div><input class="form-input" id="pf-email" placeholder="email@example.com" type="email"></div>
+          <div class="form-group"><div class="form-label">Телефон</div><input class="form-input" id="pf-phone" placeholder="+7 (999) 123-45-67"></div>
+          <div class="form-group"><div class="form-label">Город</div><input class="form-input" placeholder="Ваш город"></div>
+          <div class="form-group full"><div class="form-label">Телеграм (необязательно)</div><input class="form-input" placeholder="@username"></div>
+        </div>
+        <button class="save-btn" onclick="showToast('Данные сохранены ✓','success')">Сохранить</button>
+      </div>
+      <div id="tab-requests" class="profile-section" style="display:none">
+        <div class="profile-section-title">Мои заявки на ремонт</div>
+        <div id="requests-list">
+          <p style="color:var(--dim);text-align:center;padding:30px 0">Заявок пока нет. Опишите проблему в чате или через Telegram!</p>
+        </div>
+      </div>
+      <div id="tab-settings" class="profile-section" style="display:none">
+        <div class="profile-section-title">Настройки аккаунта</div>
+        <div class="form-grid">
+          <div class="form-group full"><div class="form-label">Новый пароль</div><input class="form-input" type="password" placeholder="Оставьте пустым, если не меняете"></div>
+          <div class="form-group full"><div class="form-label">Подтверждение пароля</div><input class="form-input" type="password" placeholder="Повторите пароль"></div>
+        </div>
+        <button class="save-btn" onclick="showToast('Пароль обновлён ✓','success')">Изменить пароль</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('login-modal')">✕</button>
+    <div class="modal-title">Repair PC</div>
+    <div class="modal-subtitle" id="modal-sub">Войдите в личный кабинет</div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchLoginTab(this,'login')">Войти</button>
+      <button class="login-tab" onclick="switchLoginTab(this,'register')">Регистрация</button>
+    </div>
+    <!-- LOGIN FORM -->
+    <div id="login-form-wrap" class="login-form">
+      <input class="modal-input" id="login-email" type="email" placeholder="Email">
+      <input class="modal-input" id="login-pass" type="password" placeholder="Пароль">
+      <!-- Captcha -->
+      <div class="captcha-wrap">
+        <div>
+          <div class="captcha-label">Введите ответ</div>
+          <div class="captcha-math" id="login-captcha-q">3 + 5 = ?</div>
+        </div>
+        <input class="captcha-input" id="login-captcha-a" type="number" placeholder="?">
+        <button class="captcha-refresh" onclick="refreshCaptcha('login')" title="Обновить">🔄</button>
+      </div>
+      <button class="modal-btn" onclick="handleLogin()">🔑 Войти</button>
+    </div>
+    <!-- REGISTER FORM -->
+    <div id="register-form-wrap" class="login-form" style="display:none">
+      <input class="modal-input" id="reg-name" placeholder="Ваше имя">
+      <input class="modal-input" id="reg-email" type="email" placeholder="Email">
+      <input class="modal-input" id="reg-pass" type="password" placeholder="Пароль (мин. 6 символов)">
+      <input class="modal-input" id="reg-pass2" type="password" placeholder="Повторите пароль">
+      <!-- Captcha -->
+      <div class="captcha-wrap">
+        <div>
+          <div class="captcha-label">Защита от ботов</div>
+          <div class="captcha-math" id="reg-captcha-q">7 + 2 = ?</div>
+        </div>
+        <input class="captcha-input" id="reg-captcha-a" type="number" placeholder="?">
+        <button class="captcha-refresh" onclick="refreshCaptcha('reg')" title="Обновить">🔄</button>
+      </div>
+      <label class="terms-check">
+        <input type="checkbox" id="reg-terms">
+        <span>Я соглашаюсь с <a href="#" style="color:var(--blue)">условиями использования</a> сервиса</span>
+      </label>
+      <button class="modal-btn" onclick="handleRegister()">✅ Создать аккаунт</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+const DB_KEY = 'repairpc_users';
+const SES_KEY = 'repairpc_session';
+let currentUser = null;
+let chatMessages = [];
+
+// Captcha state
+let loginCaptcha = {a:0,b:0};
+let regCaptcha = {a:0,b:0};
+
+function getUsers(){
+  try{return JSON.parse(localStorage.getItem(DB_KEY)||'[]')}catch{return[]}
+}
+function saveUsers(u){localStorage.setItem(DB_KEY,JSON.stringify(u))}
+function getSession(){
+  try{return JSON.parse(localStorage.getItem(SES_KEY)||'null')}catch{return null}
+}
+function saveSession(u){localStorage.setItem(SES_KEY,JSON.stringify(u))}
+function clearSession(){localStorage.removeItem(SES_KEY)}
+
+// ── CAPTCHA ────────────────────────────────────────────
+function genCaptcha(){
+  const a=Math.floor(Math.random()*10)+1;
+  const b=Math.floor(Math.random()*10)+1;
+  return {a,b,ans:a+b};
+}
+function refreshCaptcha(type){
+  const c=genCaptcha();
+  if(type==='login'){
+    loginCaptcha={...c};
+    document.getElementById('login-captcha-q').textContent=`${c.a} + ${c.b} = ?`;
+    document.getElementById('login-captcha-a').value='';
+  } else {
+    regCaptcha={...c};
+    document.getElementById('reg-captcha-q').textContent=`${c.a} + ${c.b} = ?`;
+    document.getElementById('reg-captcha-a').value='';
+  }
+}
+// Init captchas
+(function(){
+  const lc=genCaptcha(); loginCaptcha=lc;
+  document.getElementById('login-captcha-q').textContent=`${lc.a} + ${lc.b} = ?`;
+  const rc=genCaptcha(); regCaptcha=rc;
+  document.getElementById('reg-captcha-q').textContent=`${rc.a} + ${rc.b} = ?`;
+})();
+
+// ── LOADER ────────────────────────────────────────────
+const loaderMsgs = [
+  'Инициализация системы...','Проверка компонентов...','Загрузка мастеров...',
+  'Подключение к серверу...','Готово к работе!'
+];
+let pct=0;
+const loaderInterval=setInterval(()=>{
+  pct+=Math.random()*12+3;
+  if(pct>=100)pct=100;
+  document.getElementById('loader-pct').textContent=Math.round(pct)+'%';
+  document.getElementById('loader-bar').style.width=pct+'%';
+  document.getElementById('loader-msg').textContent=loaderMsgs[Math.min(Math.floor(pct/25),4)];
+  if(pct>=100){clearInterval(loaderInterval);setTimeout(finishLoader,400)}
+},150);
+
+function finishLoader(){
+  document.getElementById('loader').classList.add('hidden');
+  document.getElementById('navbar').classList.add('visible');
+  setTimeout(animateCounters,400);
+  // Restore session
+  const ses=getSession();
+  if(ses){currentUser=ses;updateNavUser()}
+}
+
+// ── COUNTERS ──────────────────────────────────────────
+function animateCounters(){
+  document.querySelectorAll('[data-count]').forEach(el=>{
+    const target=parseInt(el.dataset.count);
+    const dur=1800;const start=Date.now();
+    const tick=()=>{
+      const p=Math.min((Date.now()-start)/dur,1);
+      const e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(e*target).toLocaleString('ru');
+      if(p<1)requestAnimationFrame(tick);
+    };tick();
+  });
+}
+
+// ── NAVIGATION ───────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const pageMap={'home':'page-home','about':'page-about','chat':'page-chat','profile':'page-profile'};
+  const page=document.getElementById(pageMap[id]||'page-home');
+  if(page){page.classList.add('active');window.scrollTo({top:0,behavior:'smooth'})}
+  // Update chat login notice
+  if(id==='chat'){
+    document.getElementById('chat-login-notice').style.display=currentUser?'none':'block';
+    document.getElementById('chat-input').disabled=!currentUser;
+    document.querySelector('.chat-send-btn').disabled=!currentUser;
+  }
+}
+
+document.getElementById('nav-avatar-btn').addEventListener('click',()=>{
+  if(currentUser)showPage('profile');else openLoginModal();
+});
+
+function openTgLink(){
+  // Replace YOUR_BOT_USERNAME with actual bot username
+  window.open('https://t.me/YOUR_BOT_USERNAME','_blank');
+}
+
+// ── AUTH ──────────────────────────────────────────────
+function openLoginModal(){
+  document.getElementById('login-modal').classList.add('open');
+  refreshCaptcha('login');refreshCaptcha('reg');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.getElementById('login-modal').addEventListener('click',function(e){if(e.target===this)closeModal('login-modal')});
+
+function switchLoginTab(btn,type){
+  document.querySelectorAll('.login-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('login-form-wrap').style.display=type==='login'?'flex':'none';
+  document.getElementById('register-form-wrap').style.display=type==='register'?'flex':'none';
+  document.getElementById('modal-sub').textContent=type==='login'?'Войдите в личный кабинет':'Создайте аккаунт бесплатно';
+}
+
+function handleLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const captchaAns=parseInt(document.getElementById('login-captcha-a').value);
+
+  if(!email||!pass){showToast('Заполните все поля','error');return}
+  if(captchaAns!==loginCaptcha.ans){showToast('Неверная капча','error');refreshCaptcha('login');return}
+
+  const users=getUsers();
+  const user=users.find(u=>u.email===email&&u.pass===btoa(pass));
+  if(!user){showToast('Неверный email или пароль','error');return}
+
+  currentUser=user;saveSession(user);
+  closeModal('login-modal');showPage('profile');
+  updateNavUser();showToast('Добро пожаловать, '+user.name+'! 👋','success');
+}
+
+function handleRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const pass2=document.getElementById('reg-pass2').value;
+  const captchaAns=parseInt(document.getElementById('reg-captcha-a').value);
+  const terms=document.getElementById('reg-terms').checked;
+
+  if(!name||!email||!pass||!pass2){showToast('Заполните все поля','error');return}
+  if(pass!==pass2){showToast('Пароли не совпадают','error');return}
+  if(pass.length<6){showToast('Пароль минимум 6 символов','error');return}
+  if(captchaAns!==regCaptcha.ans){showToast('Неверная капча','error');refreshCaptcha('reg');return}
+  if(!terms){showToast('Примите условия использования','error');return}
+
+  const users=getUsers();
+  if(users.find(u=>u.email===email)){showToast('Этот email уже зарегистрирован','error');return}
+
+  const user={id:Date.now(),name,email,pass:btoa(pass),role:'Клиент',createdAt:new Date().toLocaleDateString('ru')};
+  users.push(user);saveUsers(users);
+
+  currentUser=user;saveSession(user);
+  closeModal('login-modal');showPage('profile');
+  updateNavUser();
+  document.getElementById('pf-name').value=name;
+  document.getElementById('pf-email').value=email;
+  showToast('Аккаунт создан! Добро пожаловать! 🎉','success');
+}
+
+function logoutUser(){
+  currentUser=null;clearSession();
+  document.getElementById('nav-avatar-btn').textContent='👤';
+  document.getElementById('profile-name').textContent='Гость';
+  showPage('home');showToast('Вы вышли из аккаунта','');
+}
+
+function updateNavUser(){
+  if(!currentUser)return;
+  document.getElementById('nav-avatar-btn').textContent='👤';
+  document.getElementById('profile-name').textContent=currentUser.name;
+  document.getElementById('profile-role').textContent=currentUser.role||'Клиент';
+  document.getElementById('pf-name').value=currentUser.name||'';
+  document.getElementById('pf-email').value=currentUser.email||'';
+}
+
+// ── PROFILE TABS ──────────────────────────────────────
+function switchProfileTab(btn,tabId){
+  document.querySelectorAll('.profile-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#tab-info,#tab-requests,#tab-settings').forEach(t=>t.style.display='none');
+  btn.classList.add('active');
+  const tab=document.getElementById(tabId);
+  if(tab)tab.style.display='block';
+}
+
+// ── CHAT ──────────────────────────────────────────────
+const masterReplies=[
+  'Понял вас! Это довольно распространённая проблема. Попробуйте сначала перезагрузить компьютер в безопасном режиме.',
+  'Похоже на проблему с драйверами. Зайдите в диспетчер устройств и проверьте наличие ошибок.',
+  'Для диагностики нам нужно знать: какая операционная система, когда последний раз обновляли систему?',
+  'Это может быть перегрев. Откройте системный блок и проверьте, не забиты ли кулеры пылью.',
+  'Рекомендую запустить проверку диска командой chkdsk /f в командной строке от администратора.',
+  'Проблема решаема! Запишитесь на диагностику — это бесплатно. Мы найдём причину и устраним её.',
+  'Скажите, когда впервые появилась проблема? И была ли перед этим установка новых программ?',
+  'Понял. Это скорее всего аппаратная проблема — нужно проверить оперативную память утилитой Memtest86.'
+];
+let replyIdx=0;
+
+function sendMessage(){
+  if(!currentUser){openLoginModal();return}
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text)return;
+  addMessage(text,'user',currentUser.name);
+  input.value='';
+  input.style.height='auto';
+  // Simulate master reply
+  setTimeout(()=>{
+    const reply=masterReplies[replyIdx%masterReplies.length];
+    addMessage(reply,'master','🔧 Мастер Алексей');
+    replyIdx++;
+    // Send to Telegram bot via webhook (if backend exists)
+    notifyTelegram(currentUser.name, text);
+  },1200+Math.random()*800);
+}
+
+function addMessage(text,role,name){
+  const msgs=document.getElementById('chat-messages');
+  const now=new Date();
+  const time=now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  div.innerHTML=`
+    ${role==='master'?`<div class="msg-name">${name}</div>`:''}
+    <div class="msg-bubble">${escapeHtml(text)}</div>
+    <div class="msg-meta">${time}</div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  chatMessages.push({role,name,text,time});
+}
+
+function escapeHtml(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function chatKeydown(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}
+}
+
+// Telegram notification (requires backend - see bot.js)
+async function notifyTelegram(userName, message){
+  // This will work when your backend (bot.js) is running
+  // Replace with your actual backend URL when deployed
+  const backendUrl = window.BACKEND_URL || '';
+  if(!backendUrl) return;
+  try{
+    await fetch(backendUrl+'/notify',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({user:userName, message, source:'website_chat'})
+    });
+  }catch(e){/* backend not connected */}
+}
+
+// Auto-resize textarea
+document.getElementById('chat-input').addEventListener('input',function(){
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,100)+'px';
+});
+
+// ── TOAST ─────────────────────────────────────────────
+function showToast(msg,type=''){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  t.className='toast '+(type||'');
+  t.innerHTML=(type==='success'?'✅ ':type==='error'?'❌ ':'ℹ️ ')+msg;
+  c.appendChild(t);setTimeout(()=>t.remove(),3100);
+}
+
+// ── PARTICLES ─────────────────────────────────────────
+const canvas=document.getElementById('particles-canvas');
+const ctx=canvas.getContext('2d');
+let W=canvas.width=window.innerWidth,H=canvas.height=window.innerHeight;
+window.addEventListener('resize',()=>{W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight});
+const particles=Array.from({length:60},()=>({
+  x:Math.random()*W,y:Math.random()*H,
+  vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,
+  r:Math.random()*1.5+.5,o:Math.random()*.4+.1
+}));
+function drawParticles(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(0,180,255,${p.o})`;ctx.fill();
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// ── PARALLAX ──────────────────────────────────────────
+window.addEventListener('mousemove',e=>{
+  const x=(e.clientX/window.innerWidth-.5)*20;
+  const y=(e.clientY/window.innerHeight-.5)*20;
+  document.querySelectorAll('.hero-grid').forEach(el=>el.style.transform=`translate(${x}px,${y}px)`);
+  document.querySelectorAll('.orb1').forEach(el=>el.style.transform=`translate(${x*.5}px,${y*.5}px)`);
+  document.querySelectorAll('.orb2').forEach(el=>el.style.transform=`translate(${-x*.3}px,${-y*.3}px)`);
+});
+
+// ── SCROLL NAV ────────────────────────────────────────
+let lastScroll=0;
+window.addEventListener('scroll',()=>{
+  const nav=document.getElementById('navbar');
+  const s=window.scrollY;
+  nav.style.transform=s>lastScroll&&s>80?'translateY(-100%)':'translateY(0)';
+  lastScroll=s;
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+});
+</script>
+</body>
+</html>
